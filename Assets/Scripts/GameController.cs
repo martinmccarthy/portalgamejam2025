@@ -10,8 +10,7 @@ public class GameController : MonoBehaviourPunCallbacks
     private void Start()
     {
         Player x = new("martinotaco", 100, (int)Colors.Blue);
-        GameObject playerman = Instantiate(m_playerPrefab);
-        playerman.transform.position = new(0,1,0);
+        GameObject playerman = PhotonNetwork.Instantiate("Player", new Vector3(0f, 1f, 0f), Quaternion.identity);
         PlayerController p = playerman.GetComponent<PlayerController>();
         p.playerName = x.Name;
     }

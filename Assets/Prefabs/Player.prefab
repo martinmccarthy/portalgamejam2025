@@ -115,6 +115,7 @@ GameObject:
   - component: {fileID: 766633436579762793}
   - component: {fileID: 184599043110197000}
   - component: {fileID: 1281763425471442945}
+  - component: {fileID: 8465415039418461743}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -227,6 +228,28 @@ MonoBehaviour:
   movementSpeed: 1
   playerName: Martinotaco
   nametag: {fileID: 1651010444827076392}
+--- !u!114 &8465415039418461743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4202990420304922917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &6534330373341571584
 GameObject:
   m_ObjectHideFlags: 0
