@@ -39,7 +39,7 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        var go = PhotonNetwork.Instantiate("Player", Vector3.up, Quaternion.identity, 0);
+        var go = PhotonNetwork.Instantiate("Player", Vector3.zero, Quaternion.identity, 0);
         // PhotonNetwork.LoadLevel("PlayerRoom");
     }
 }
