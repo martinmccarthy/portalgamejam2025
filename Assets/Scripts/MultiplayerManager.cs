@@ -10,6 +10,8 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
     void Awake()
     {
         PhotonNetwork.AutomaticallySyncScene = true;
+        PhotonNetwork.GameVersion = version;
+        PhotonNetwork.ConnectUsingSettings();
     }
 
 
@@ -32,11 +34,12 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
-        PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = maxPlayersPerRoom });
+        PhotonNetwork.CreateRoom("TestRoom", new RoomOptions { MaxPlayers = maxPlayersPerRoom });
     }
 
     public override void OnJoinedRoom()
     {
-        PhotonNetwork.LoadLevel("PlayerRoom");
+        var go = PhotonNetwork.Instantiate("Player", Vector3.up, Quaternion.identity, 0);
+        // PhotonNetwork.LoadLevel("PlayerRoom");
     }
 }

@@ -9,7 +9,7 @@ public class GameController : MonoBehaviourPunCallbacks
     [SerializeField] GameObject m_playerPrefab;
     private void Start()
     {
-        var go = PhotonNetwork.Instantiate(m_playerPrefab.name, Vector3.up, Quaternion.identity);
+        var go = PhotonNetwork.Instantiate("Player", Vector3.up, Quaternion.identity, 0);
         PhotonNetwork.LocalPlayer.TagObject = go;
     }
 
@@ -29,21 +29,5 @@ public class GameController : MonoBehaviourPunCallbacks
         {
             Debug.Log($"Player joined: {newPlayer.NickName}");
         }
-
-        //var go = PhotonNetwork.Instantiate(m_playerPrefab.name, Vector3.up, Quaternion.identity);
-        //go.GetPhotonView(). = newPlayer;
-        //newPlayer.TagObject = go;
-
     }
-
-    void LoadArena()
-    {
-        if(!PhotonNetwork.IsMasterClient)
-        {
-            Debug.LogError("shit is happening but im not the master");
-            return;
-        }
-
-        //PhotonNetwork.LoadLevel("PlayerRoom");
-    }    
 }
