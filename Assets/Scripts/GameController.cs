@@ -9,6 +9,8 @@ public class GameController : MonoBehaviourPunCallbacks
     [SerializeField] GameObject m_playerPrefab;
     private void Start()
     {
+        if (!PhotonNetwork.InRoom) return;
+
         Player x = new("martinotaco", 100, (int)Colors.Blue);
         GameObject playerman = PhotonNetwork.Instantiate("Player", new Vector3(0f, 1f, 0f), Quaternion.identity);
         PlayerController p = playerman.GetComponent<PlayerController>();
@@ -28,7 +30,7 @@ public class GameController : MonoBehaviourPunCallbacks
     {
         if(PhotonNetwork.IsMasterClient)
         {
-            LoadArena();
+            Debug.Log($"Player joined: {newPlayer.NickName}");
         }
     }
 
