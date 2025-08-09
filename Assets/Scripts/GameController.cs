@@ -6,6 +6,15 @@ using UnityEngine.SceneManagement;
 public class GameController : MonoBehaviourPunCallbacks
 {
     public List<Player> players = new();
+    [SerializeField] GameObject m_playerPrefab;
+    private void Start()
+    {
+        Player x = new("martinotaco", 100, (int)Colors.Blue);
+        GameObject playerman = Instantiate(m_playerPrefab);
+        playerman.transform.position = new(0,1,0);
+        PlayerController p = playerman.GetComponent<PlayerController>();
+        p.playerName = x.Name;
+    }
 
     public override void OnLeftRoom()
     {
