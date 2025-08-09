@@ -11,10 +11,6 @@ public class GameController : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.InRoom) return;
 
-        Player x = new("martinotaco", 100, (int)Colors.Blue);
-        GameObject playerman = PhotonNetwork.Instantiate("Player", new Vector3(0f, 1f, 0f), Quaternion.identity);
-        PlayerController p = playerman.GetComponent<PlayerController>();
-        p.playerName = x.Name;
     }
 
     public override void OnLeftRoom()
@@ -30,7 +26,12 @@ public class GameController : MonoBehaviourPunCallbacks
     {
         if(PhotonNetwork.IsMasterClient)
         {
-            Debug.Log($"Player joined: {newPlayer.NickName}");
+            Debug.Log($"Player joined: {newPlayer.NickName}"); 
+            Player x = new("martinotaco", 100, (int)Colors.Blue);
+            GameObject playerman = PhotonNetwork.Instantiate("Player", new Vector3(0f, 1f, 0f), Quaternion.identity);
+            PlayerController p = playerman.GetComponent<PlayerController>();
+            p.playerName = x.Name;
+
         }
     }
 
