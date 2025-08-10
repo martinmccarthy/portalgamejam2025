@@ -12,6 +12,7 @@ public class RoundManager : MonoBehaviourPunCallbacks
 
     const string RoomKey_KillerActor = "KillerActor";
     const string PlayerKey_IsKiller = "IsKiller";
+    const string PlayerKey_IsAlive = "IsAlive";
 
     float timer;
     bool roundActive;
@@ -42,6 +43,16 @@ public class RoundManager : MonoBehaviourPunCallbacks
         roundActive = true;
         timer = roundTime;
         SyncLocalKillerFlag();
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            var list = PhotonNetwork.PlayerList;
+            for (int i = 0; i < list.Length; i++)
+            {
+                var props = new PhotonHashtable { { PlayerKey_IsAlive, true } };
+                list[i].SetCustomProperties(props);
+            }
+        }
     }
 
     void Update()
@@ -51,6 +62,25 @@ public class RoundManager : MonoBehaviourPunCallbacks
         timer -= Time.deltaTime;
         if (text) text.text = $"Round Time: {Mathf.Ceil(timer)}";
         if (timer <= 0f && PhotonNetwork.IsMasterClient)
+            photonView.RPC(nameof(EndRound), RpcTarget.All);
+    }
+
+    [PunRPC]
+    void CheckSurvivors()
+    {
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        int survivors = 0;
+        var list = PhotonNetwork.PlayerList;
+        for (int i = 0; i < list.Length; i++)
+        {
+            var p = list[i];
+            if (p.ActorNumber == killerActor) continue;
+            bool alive = p.CustomProperties.TryGetValue(PlayerKey_IsAlive, out var v) && v is bool b && b;
+            if (alive) survivors++;
+        }
+
+        if (survivors <= 0)
             photonView.RPC(nameof(EndRound), RpcTarget.All);
     }
 
@@ -110,7 +140,7 @@ public class RoundManager : MonoBehaviourPunCallbacks
     public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
     {
         if (!PhotonNetwork.IsMasterClient) return;
-        photonView.RPC(nameof(StartRound), newPlayer, killerActor);
+        photonView.RPC(nameof(StartRound), newPlayer);
     }
 
     public override void OnPlayerPropertiesUpdate(Photon.Realtime.Player targetPlayer, PhotonHashtable changedProps)

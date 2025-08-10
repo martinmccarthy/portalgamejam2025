@@ -1457,6 +1457,7 @@ GameObject:
   - component: {fileID: 4647275354508708563}
   - component: {fileID: 6311461032141761702}
   - component: {fileID: -7520543284925242420}
+  - component: {fileID: 9163408843306503145}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1522,6 +1523,7 @@ MonoBehaviour:
   m_killKey: 102
   m_killMagnitude: 1
   isAlive: 1
+  cap: {fileID: 6311461032141761702}
   movementSpeed: 3
   sprintSpeed: 5
   jumpHeight: 1.2
@@ -1677,6 +1679,29 @@ MonoBehaviour:
   m_SynchronizeLayers:
   - SynchronizeType: 0
     LayerIndex: 0
+--- !u!136 &9163408843306503145
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4038433361093953058}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 2.31
+  m_Height: 3.85
+  m_Direction: 1
+  m_Center: {x: 0, y: 1.95, z: 0}
 --- !u!1 &4350905233406479733
 GameObject:
   m_ObjectHideFlags: 0
