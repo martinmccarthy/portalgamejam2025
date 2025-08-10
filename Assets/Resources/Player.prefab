@@ -1518,6 +1518,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec13d401184fe274db4d7479b7cfa776, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isKiller: 0
+  m_killKey: 102
+  m_killMagnitude: 1
+  isAlive: 1
   movementSpeed: 3
   sprintSpeed: 5
   jumpHeight: 1.2
@@ -1533,11 +1537,13 @@ MonoBehaviour:
   nametag: {fileID: 3073956083796509593}
   anim: {fileID: 0}
   runCycleLegOffset: 0.2
+  redPortal: {fileID: 9054540331385605981, guid: d7eb3b3f515f08c4cb95c5ffb6be6e88, type: 3}
+  bluePortal: {fileID: 5487362304835745501, guid: c3ec3579cb957394788a37f8ce2855fe, type: 3}
   clickRayDistance: 200
   clickRayMask:
     serializedVersion: 2
     m_Bits: 1024
-  portalOffset: 0.25
+  portalOffset: 0.05
   portalSize: {x: 0.35, y: 0.55, z: 0.02}
   exitClearance: 0.25
   portalCooldown: 0.25

@@ -2,13 +2,12 @@ using Photon.Pun;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using ExitGames.Client.Photon;
 using System.Collections;
+using PhotonHashtable = ExitGames.Client.Photon.Hashtable;
 
 public class RoundManager : MonoBehaviourPunCallbacks
 {
     [SerializeField] float roundTime = 600f;
-    [SerializeField] float startDelay = 5f;
     [SerializeField] TMP_Text text;
 
     const string RoomKey_KillerActor = "KillerActor";
@@ -25,55 +24,34 @@ public class RoundManager : MonoBehaviourPunCallbacks
     {
         canvasRoot = GetComponentInChildren<Canvas>(true)?.transform as RectTransform;
         if (PhotonNetwork.IsMasterClient)
-        {
-            Debug.Log("called rpc to master");
             photonView.RPC(nameof(CheckAllReady), RpcTarget.MasterClient);
-        }
     }
 
     [PunRPC]
     void CheckAllReady()
     {
-        photonView.RPC(nameof(StartRound), RpcTarget.All, startDelay);
+        if (!PhotonNetwork.IsMasterClient) return;
+        int picked = SelectKillerForThisRound();
+        photonView.RPC(nameof(StartRound), RpcTarget.All, picked);
     }
 
     [PunRPC]
-    void StartRound(float delay)
+    void StartRound(int killerActorParam)
     {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            SelectKillerForThisRound();
-        }
-
-        roundActive = false;
-        timer = delay;
-
-        if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(RoomKey_KillerActor, out var act))
-            killerActor = (int)act;
-
+        killerActor = killerActorParam;
+        roundActive = true;
+        timer = roundTime;
         SyncLocalKillerFlag();
     }
 
     void Update()
     {
-        if (!PhotonNetwork.IsConnected) return;
+        if (!PhotonNetwork.IsConnected || !roundActive) return;
 
-        if (!roundActive)
-        {
-            timer -= Time.deltaTime;
-            if (timer <= 0f)
-            {
-                roundActive = true;
-                timer = roundTime;
-            }
-        }
-        else
-        {
-            timer -= Time.deltaTime;
-            if (text) text.text = $"Round Time: {Mathf.Ceil(timer)}";
-            if (timer <= 0f && PhotonNetwork.IsMasterClient)
-                photonView.RPC(nameof(EndRound), RpcTarget.All);
-        }
+        timer -= Time.deltaTime;
+        if (text) text.text = $"Round Time: {Mathf.Ceil(timer)}";
+        if (timer <= 0f && PhotonNetwork.IsMasterClient)
+            photonView.RPC(nameof(EndRound), RpcTarget.All);
     }
 
     [PunRPC]
@@ -84,26 +62,43 @@ public class RoundManager : MonoBehaviourPunCallbacks
             PhotonNetwork.LoadLevel(SceneManager.GetActiveScene().buildIndex);
     }
 
-    void SelectKillerForThisRound()
+    int SelectKillerForThisRound()
     {
         var list = PhotonNetwork.PlayerList;
-        if (list == null || list.Length == 0) return;
+        if (list == null || list.Length == 0) return -1;
 
         var chosen = list[Random.Range(0, list.Length)];
         killerActor = chosen.ActorNumber;
-        Debug.Log($"Chosen: {chosen}");
-        var roomProps = new ExitGames.Client.Photon.Hashtable { { RoomKey_KillerActor, killerActor } };
+
+        var roomProps = new PhotonHashtable { { RoomKey_KillerActor, killerActor } };
         PhotonNetwork.CurrentRoom.SetCustomProperties(roomProps);
 
         foreach (var p in list)
         {
             bool isKiller = p.ActorNumber == killerActor;
-            var props = new ExitGames.Client.Photon.Hashtable { { PlayerKey_IsKiller, isKiller } };
+            var props = new PhotonHashtable { { PlayerKey_IsKiller, isKiller } };
             p.SetCustomProperties(props);
+
+            if (isKiller)
+                photonView.RPC(nameof(SetKillerBoolOnClient), p, true);
         }
+
+        return killerActor;
     }
 
-    public override void OnRoomPropertiesUpdate(ExitGames.Client.Photon.Hashtable changed)
+    [PunRPC]
+    void SetKillerBoolOnClient(bool value)
+    {
+        foreach (var pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+        {
+            if (pc.photonView.IsMine)
+            {
+                pc.isKiller = value;
+                break;
+            }
+        }
+    }
+    public override void OnRoomPropertiesUpdate(PhotonHashtable changed)
     {
         if (changed.ContainsKey(RoomKey_KillerActor))
         {
@@ -115,10 +110,10 @@ public class RoundManager : MonoBehaviourPunCallbacks
     public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
     {
         if (!PhotonNetwork.IsMasterClient) return;
-        photonView.RPC(nameof(StartRound), newPlayer, Mathf.Max(0f, roundActive ? timer : timer));
+        photonView.RPC(nameof(StartRound), newPlayer, killerActor);
     }
 
-    public override void OnPlayerPropertiesUpdate(Photon.Realtime.Player targetPlayer, ExitGames.Client.Photon.Hashtable changedProps)
+    public override void OnPlayerPropertiesUpdate(Photon.Realtime.Player targetPlayer, PhotonHashtable changedProps)
     {
         if (targetPlayer.IsLocal && changedProps.ContainsKey(PlayerKey_IsKiller))
             SyncLocalKillerFlag();
@@ -130,7 +125,7 @@ public class RoundManager : MonoBehaviourPunCallbacks
         bool has = PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(PlayerKey_IsKiller, out var v) && v is bool b && b;
         if (has != isKiller)
         {
-            var props = new ExitGames.Client.Photon.Hashtable { { PlayerKey_IsKiller, isKiller } };
+            var props = new PhotonHashtable { { PlayerKey_IsKiller, isKiller } };
             PhotonNetwork.LocalPlayer.SetCustomProperties(props);
         }
         if (isKiller && !killerBannerShown)

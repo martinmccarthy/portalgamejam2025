@@ -130,8 +130,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         {
             DoRotation();
             DoMotion();
-            HandleKill();
-            HandlePortalClicks();
+            HandleKiller();
         }
         else
         {
@@ -140,10 +139,17 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         }
     }
 
-    private void HandleKill()
+    private void HandleKiller()
     {
+        if (!isKiller)
+        {
+            Debug.Log("killer not found");
+            return;
+        }
+        HandlePortalClicks();
+
         // if within proximity to player
-        if (isKiller && Input.GetKeyDown(m_killKey))
+        if (Input.GetKeyDown(m_killKey))
         {
             Ray r = new(transform.position, transform.forward);
             Physics.Raycast(r, out RaycastHit hit);
@@ -318,63 +324,66 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
     void CreateOrMoveEndpoint(ref PortalEndpoint endpoint, string name, RaycastHit hit)
     {
+        bool isLeft = name == "PortalLeft";
+
+        if (endpoint == null)
+            endpoint = FindExistingEndpoint(isLeft);
+
         Vector3 pos = hit.point + hit.normal * portalOffset;
         Quaternion rot = Quaternion.LookRotation(hit.normal, Vector3.up);
 
         if (endpoint == null)
         {
-            GameObject go = Instantiate(name == "PortalLeft" ? redPortal : bluePortal);
-            go.transform.position = pos;
-            go.transform.rotation = rot;
-
-            BoxCollider bc = go.AddComponent<BoxCollider>();
-            bc.isTrigger = true;
-            bc.size = portalSize;
-
-            endpoint = go.AddComponent<PortalEndpoint>();
-            endpoint.owner = this;
-            endpoint.isLeft = (name == "PortalLeft");
+            var prefab = isLeft ? redPortal : bluePortal;
+            var go = PhotonNetwork.Instantiate(prefab.name, pos, rot, 0, new object[] { isLeft, photonView.ViewID });
+            endpoint = go.GetComponent<PortalEndpoint>();
         }
         else
         {
-            endpoint.transform.SetPositionAndRotation(pos, rot);
+            if (endpoint.photonView != null)
+                endpoint.photonView.RPC(nameof(PortalEndpoint.NetMove), RpcTarget.All, pos, rot);
+            else
+                endpoint.transform.SetPositionAndRotation(pos, rot);
         }
+    }
+
+    PortalEndpoint FindExistingEndpoint(bool isLeft)
+    {
+        var all = FindObjectsByType<PortalEndpoint>(FindObjectsSortMode.None);
+        for (int i = 0; i < all.Length; i++)
+            if (all[i].owner == this && all[i].isLeft == isLeft)
+                return all[i];
+        return null;
     }
 
     public void TryTeleportFrom(PortalEndpoint from)
     {
         if (Time.time < nextTeleportAllowed) return;
 
-        PortalEndpoint to = (from.isLeft ? rightEndpoint : leftEndpoint);
+        PortalEndpoint to = FindSiblingEndpoint(from);
         if (to == null) return;
 
         Vector3 destNormal = to.transform.forward.normalized;
 
-        bool toFloor = Vector3.Dot(destNormal, Vector3.up) > 0.75f; // faces up
-        bool toCeiling = Vector3.Dot(destNormal, Vector3.down) > 0.75f; // faces down
+        bool toFloor = Vector3.Dot(destNormal, Vector3.up) > 0.75f;
+        bool toCeiling = Vector3.Dot(destNormal, Vector3.down) > 0.75f;
         bool toWall = !toFloor && !toCeiling;
 
-        // Base clearance
         float clearance = exitClearance;
-        if (toFloor) clearance *= floorExitClearanceMultiplier; // only when ARRIVING at a floor portal
+        if (toFloor) clearance *= floorExitClearanceMultiplier;
 
-        // Exit position
         Vector3 exitPos = to.transform.position + destNormal * clearance;
         if (toFloor) exitPos += Vector3.up * floorUpwardBoost;
 
-        // Exit rotation (always upright)
         Quaternion exitRot;
-
         if (toWall)
         {
-            // Face the wall's normal, but keep world-up as Up
             Vector3 fwd = Vector3.ProjectOnPlane(destNormal, Vector3.up);
-            if (fwd.sqrMagnitude < 1e-4f) fwd = Vector3.forward; // safety
+            if (fwd.sqrMagnitude < 1e-4f) fwd = Vector3.forward;
             exitRot = Quaternion.LookRotation(fwd.normalized, Vector3.up);
         }
         else
         {
-            // Floor or ceiling: keep player upright; preserve horizontal yaw from current facing
             Vector3 yawForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
             if (yawForward.sqrMagnitude < 1e-4f)
             {
@@ -384,7 +393,6 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
             exitRot = Quaternion.LookRotation(yawForward.normalized, Vector3.up);
         }
 
-        // Teleport
         controller.enabled = false;
         transform.SetPositionAndRotation(exitPos, exitRot);
         verticalVelocity = 0f;
@@ -393,7 +401,18 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         nextTeleportAllowed = Time.time + portalCooldown;
     }
 
-
+    PortalEndpoint FindSiblingEndpoint(PortalEndpoint from)
+    {
+        var all = FindObjectsByType<PortalEndpoint>(FindObjectsSortMode.None);
+        for (int i = 0; i < all.Length; i++)
+        {
+            var e = all[i];
+            if (e == from) continue;
+            if (e.owner == from.owner && e.isLeft != from.isLeft)
+                return e;
+        }
+        return null;
+    }
 
     void OnDrawGizmos()
     {
@@ -440,19 +459,3 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     }
 }
 
-// Small helper on each portal endpoint that teleports the player when touched
-public class PortalEndpoint : MonoBehaviour
-{
-    public PlayerController owner;
-    public bool isLeft;
-
-    void OnTriggerEnter(Collider other)
-    {
-        if (!owner) return;
-        var pc = other.GetComponentInParent<PlayerController>();
-        if (pc && pc == owner) // only teleport this player’s controller
-        {
-            owner.TryTeleportFrom(this);
-        }
-    }
-}
