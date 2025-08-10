@@ -867,7 +867,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxPlayersPerRoom: 6
   version: 1
-  gameplaySceneName: Multiplayer
+  gameplaySceneName: Portal
 --- !u!4 &786058604
 Transform:
   m_ObjectHideFlags: 0
