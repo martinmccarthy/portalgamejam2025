@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 {
     [Header("Move")]
     public float movementSpeed = 4f;
+    public float sprintSpeed = 6f;
     [SerializeField] float jumpHeight = 1.2f;
     [SerializeField] float g = -9.81f;
 
@@ -31,6 +32,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     [SerializeField] float runCycleLegOffset = 0.2f;
 
     static readonly int ForwardID = Animator.StringToHash("Forward");
+    static readonly int RightID = Animator.StringToHash("Right");
     static readonly int TurnID = Animator.StringToHash("Turn");
     static readonly int CrouchID = Animator.StringToHash("Crouch");
     static readonly int OnGroundID = Animator.StringToHash("OnGround");
@@ -51,6 +53,16 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
     Vector3 netTargetPos;
     Quaternion netTargetRot;
+
+    // ---- Click raycast & gizmos ----
+    [Header("Click Raycast")]
+    [SerializeField] float clickRayDistance = 200f;
+    [SerializeField] LayerMask clickRayMask = ~0;      // everything by default
+    [SerializeField] float gizmoSize = 0.15f;
+    Vector3? lastLeftHitPos;
+    Vector3? lastRightHitPos;
+    Vector3 lastLeftHitNormal;
+    Vector3 lastRightHitNormal;
 
     void Awake()
     {
@@ -103,6 +115,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         {
             DoRotation();
             DoMotion();
+            HandleClickRaycasts();
         }
         else
         {
@@ -125,7 +138,6 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         pitch = Mathf.Clamp(pitch, pitchMin, pitchMax);
         if (cam) cam.transform.localEulerAngles = new Vector3(pitch, 0f, 0f);
 
-        // if (anim) anim.SetFloat(TurnID, mouseX);
         float smoothedTurn = Mathf.Lerp(anim.GetFloat(TurnID), mouseX, Time.deltaTime * 10f);
         anim.SetFloat(TurnID, smoothedTurn);
     }
@@ -153,7 +165,10 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
         verticalVelocity += g * Time.deltaTime;
 
-        Vector3 velocity = moveDir * movementSpeed;
+        Vector3 velocity = (Input.GetKey(KeyCode.LeftShift) && inputV >= 0)
+            ? moveDir * sprintSpeed
+            : moveDir * movementSpeed;
+
         velocity.y = verticalVelocity;
         controller.Move(velocity * Time.deltaTime);
 
@@ -168,9 +183,19 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
             float forwardAmount = 0f;
             float speed = velXZ.magnitude;
             if (movementSpeed > 0.001f)
-                forwardAmount = Mathf.Clamp(Vector3.Dot(velXZ.normalized, transform.forward) * (speed / movementSpeed), -1f, 1f);
+            {
+                if (inputV > 0 && Input.GetKey(KeyCode.LeftShift)) forwardAmount = 1f;
+                else if (inputV > 0) forwardAmount = 0.5f;
+                else if (inputV < 0) forwardAmount = -1f;
+                else forwardAmount = 0f;
+            }
 
-            anim.SetFloat(ForwardID, forwardAmount);
+            float rightAmount = 0f;
+            if (movementSpeed > 0.001f)
+                rightAmount = Mathf.Clamp(Vector3.Dot(velXZ.normalized, transform.right) * (speed / movementSpeed), -1f, 1f);
+
+            anim.SetFloat(ForwardID, forwardAmount, 0.12f, Time.deltaTime);
+            anim.SetFloat(RightID, rightAmount, 0.12f, Time.deltaTime);
             anim.SetBool(CrouchID, isSliding || wantsCrouch);
             anim.SetBool(OnGroundID, onGround);
             anim.SetFloat(JumpID, verticalVelocity);
@@ -188,8 +213,8 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
     bool IsGrounded()
     {
-        float rayLength = 0.2f; // distance from bottom of player capsule to check
-        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f; // start slightly above feet
+        float rayLength = 0.2f;
+        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f;
         return Physics.Raycast(rayOrigin, Vector3.down, rayLength);
     }
 
@@ -234,6 +259,50 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
             cam.enabled = photonView.IsMine;
             var a = cam.GetComponent<AudioListener>();
             if (a) a.enabled = photonView.IsMine;
+        }
+    }
+
+    // ---- CLICK RAYCAST ----
+    void HandleClickRaycasts()
+    {
+        if (!cam) return;
+
+        // Use the center of the screen since your cursor is locked
+        Vector3 center = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+        Ray ray = cam.ScreenPointToRay(center);
+
+        if (Input.GetMouseButtonDown(0)) // Left click
+        {
+            if (Physics.Raycast(ray, out RaycastHit hit, clickRayDistance, clickRayMask, QueryTriggerInteraction.Ignore))
+            {
+                lastLeftHitPos = hit.point;
+                lastLeftHitNormal = hit.normal;
+            }
+        }
+
+        if (Input.GetMouseButtonDown(1)) // Right click
+        {
+            if (Physics.Raycast(ray, out RaycastHit hit, clickRayDistance, clickRayMask, QueryTriggerInteraction.Ignore))
+            {
+                lastRightHitPos = hit.point;
+                lastRightHitNormal = hit.normal;
+            }
+        }
+    }
+
+    void OnDrawGizmos()
+    {
+        if (lastLeftHitPos.HasValue)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(lastLeftHitPos.Value, gizmoSize);
+            Gizmos.DrawLine(lastLeftHitPos.Value, lastLeftHitPos.Value + lastLeftHitNormal * (gizmoSize * 2f));
+        }
+        if (lastRightHitPos.HasValue)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawSphere(lastRightHitPos.Value, gizmoSize);
+            Gizmos.DrawLine(lastRightHitPos.Value, lastRightHitPos.Value + lastRightHitNormal * (gizmoSize * 2f));
         }
     }
 

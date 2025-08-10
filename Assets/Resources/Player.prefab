@@ -1497,7 +1497,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 3353a3be5f7a67f42a309381262cba10, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -1519,6 +1519,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   movementSpeed: 3
+  sprintSpeed: 5
   jumpHeight: 1.2
   g: -9.81
   mouseSensitivity: 180
@@ -1532,6 +1533,11 @@ MonoBehaviour:
   nametag: {fileID: 3073956083796509593}
   anim: {fileID: 0}
   runCycleLegOffset: 0.2
+  clickRayDistance: 200
+  clickRayMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  gizmoSize: 0.15
 --- !u!143 &3193002681448302957
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1654,6 +1660,9 @@ MonoBehaviour:
   - Type: 1
     SynchronizeType: 2
     Name: JumpLeg
+  - Type: 1
+    SynchronizeType: 2
+    Name: Right
   m_SynchronizeLayers:
   - SynchronizeType: 0
     LayerIndex: 0
@@ -2912,7 +2921,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 1079
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
