@@ -26,11 +26,20 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     [Header("UI")]
     public TMP_Text nametag;
 
-    // components
+    [Header("Animator")]
+    [SerializeField] Animator anim;
+    [SerializeField] float runCycleLegOffset = 0.2f;
+
+    static readonly int ForwardID = Animator.StringToHash("Forward");
+    static readonly int TurnID = Animator.StringToHash("Turn");
+    static readonly int CrouchID = Animator.StringToHash("Crouch");
+    static readonly int OnGroundID = Animator.StringToHash("OnGround");
+    static readonly int JumpID = Animator.StringToHash("Jump");
+    static readonly int JumpLegID = Animator.StringToHash("JumpLeg");
+
     CharacterController controller;
     Camera cam;
 
-    // state
     float pitch;
     float verticalVelocity;
     bool isSliding;
@@ -40,7 +49,6 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     float originalHeight;
     Vector3 originalCenter;
 
-    // net interpolation (for non-owners)
     Vector3 netTargetPos;
     Quaternion netTargetRot;
 
@@ -48,24 +56,32 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     {
         controller = GetComponent<CharacterController>();
         var cap = GetComponent<CapsuleCollider>() ?? gameObject.AddComponent<CapsuleCollider>();
-        cap.direction = 1; // Y
+        cap.direction = 1;
         cap.radius = controller.radius;
         cap.height = controller.height;
         cap.center = controller.center;
 
-        if (photonView.IsMine) 
-        { 
+        if (!anim) anim = GetComponentInChildren<Animator>();
+
+        if (photonView.IsMine)
+        {
             controller.enabled = true;
             cap.enabled = false;
-            transform.Find("Icosphere.001").gameObject.layer = LayerMask.NameToLayer("Self");
+            Transform selfMarker = transform.Find("Icosphere.001");
+            if (selfMarker) selfMarker.gameObject.layer = LayerMask.NameToLayer("Self");
         }
-        else 
-        { 
-            controller.enabled = false; 
-            cap.enabled = true; 
+        else
+        {
+            controller.enabled = false;
+            cap.enabled = true;
         }
-    }
 
+        originalHeight = controller.height;
+        originalCenter = controller.center;
+
+        netTargetPos = transform.position;
+        netTargetRot = transform.rotation;
+    }
 
     void Start()
     {
@@ -90,30 +106,30 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         }
         else
         {
-            // Smoothly follow networked transform
             transform.position = Vector3.Lerp(transform.position, netTargetPos, 12f * Time.deltaTime);
             transform.rotation = Quaternion.Slerp(transform.rotation, netTargetRot, 12f * Time.deltaTime);
         }
     }
 
-    // ---------- Look / Rotate (owner only) ----------
     private void DoRotation()
     {
-        float inputHorizontal = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        float inputVertical = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+        float mouseX = Input.GetAxis("Mouse X");
+        float mouseY = Input.GetAxis("Mouse Y");
 
-        // Yaw on the body
-        transform.Rotate(Vector3.up * inputHorizontal);
+        float yawDelta = mouseX * mouseSensitivity * Time.deltaTime;
+        float pitchDelta = mouseY * mouseSensitivity * Time.deltaTime;
 
-        // NO translate here (conflicts with CC). Keep translation in DoMotion() only.
+        transform.Rotate(Vector3.up * yawDelta);
 
-        // Pitch on the camera
-        pitch -= inputVertical;
+        pitch -= pitchDelta;
         pitch = Mathf.Clamp(pitch, pitchMin, pitchMax);
         if (cam) cam.transform.localEulerAngles = new Vector3(pitch, 0f, 0f);
+
+        // if (anim) anim.SetFloat(TurnID, mouseX);
+        float smoothedTurn = Mathf.Lerp(anim.GetFloat(TurnID), mouseX, Time.deltaTime * 10f);
+        anim.SetFloat(TurnID, smoothedTurn);
     }
 
-    // ---------- Move / Jump / Slide (owner only) ----------
     private void DoMotion()
     {
         float inputH = Input.GetAxisRaw("Horizontal");
@@ -121,34 +137,60 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
         Vector3 moveDir = (transform.right * inputH + transform.forward * inputV).normalized;
 
-        // Ground handling
-        if (controller.isGrounded && verticalVelocity < 0f)
-            verticalVelocity = -2f; // small stick-to-ground
+        bool onGround = IsGrounded();
+        if (onGround && verticalVelocity < 0f)
+            verticalVelocity = -2f;
 
-        // Jump
-        if (controller.isGrounded && Input.GetKeyDown(KeyCode.Space))
+        if (onGround && Input.GetKeyDown(KeyCode.Space))
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * g);
 
-        // Slide start
-        if (!isSliding && controller.isGrounded && inputV > 0f && Input.GetKeyDown(slideButton) && Time.time >= nextSlideTime)
+        bool wantsCrouch = Input.GetKey(slideButton);
+        if (!isSliding && onGround && inputV > 0f && Input.GetKeyDown(slideButton) && Time.time >= nextSlideTime)
             Slide();
 
-        // Slide update
         if (isSliding)
             InSlideMotion();
 
-        // Gravity
         verticalVelocity += g * Time.deltaTime;
 
-        // Final motion
         Vector3 velocity = moveDir * movementSpeed;
         velocity.y = verticalVelocity;
-
         controller.Move(velocity * Time.deltaTime);
 
-        // Slide end when timer expires or we leave ground
-        if (isSliding && (slideTimer <= 0f || !controller.isGrounded))
+        if (isSliding && (slideTimer <= 0f || !onGround))
             EndSlide();
+
+        if (anim)
+        {
+            Vector3 vel = controller.velocity;
+            Vector3 velXZ = new Vector3(vel.x, 0f, vel.z);
+
+            float forwardAmount = 0f;
+            float speed = velXZ.magnitude;
+            if (movementSpeed > 0.001f)
+                forwardAmount = Mathf.Clamp(Vector3.Dot(velXZ.normalized, transform.forward) * (speed / movementSpeed), -1f, 1f);
+
+            anim.SetFloat(ForwardID, forwardAmount);
+            anim.SetBool(CrouchID, isSliding || wantsCrouch);
+            anim.SetBool(OnGroundID, onGround);
+            anim.SetFloat(JumpID, verticalVelocity);
+
+            float jumpLeg = 0f;
+            if (onGround && speed > 0.1f)
+            {
+                var state = anim.GetCurrentAnimatorStateInfo(0);
+                float runCycle = Mathf.Repeat(state.normalizedTime + runCycleLegOffset, 1f);
+                jumpLeg = (runCycle < 0.5f ? 1f : -1f) * forwardAmount;
+            }
+            anim.SetFloat(JumpLegID, jumpLeg);
+        }
+    }
+
+    bool IsGrounded()
+    {
+        float rayLength = 0.2f; // distance from bottom of player capsule to check
+        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f; // start slightly above feet
+        return Physics.Raycast(rayOrigin, Vector3.down, rayLength);
     }
 
     private void Slide()
@@ -157,10 +199,8 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         slideTimer = slideDuration;
         nextSlideTime = Time.time + slideCooldown + slideDuration;
 
-        // keep horizontal direction of current forward
         slideDir = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
 
-        // crouch capsule
         controller.height = slideHeight;
         Vector3 c = controller.center;
         controller.center = new Vector3(c.x, slideHeight * 0.5f, c.z);
@@ -169,11 +209,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     private void InSlideMotion()
     {
         slideTimer -= Time.deltaTime;
-
-        // apply a burst along slideDir on XZ
-        Vector3 slideVel = slideDir * slideSpeed;
-        slideVel.y = 0f;
-
+        Vector3 slideVel = slideDir * slideSpeed; slideVel.y = 0f;
         controller.Move(slideVel * Time.deltaTime);
     }
 
@@ -186,7 +222,6 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
     private void HandleCameraLoad()
     {
-        // find a child named "Camera" or any Camera under this object
         if (!cam)
         {
             Transform t = transform.Find("Camera");
@@ -202,22 +237,20 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         }
     }
 
-    // ---------- Photon Sync ----------
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
-        if (stream.IsWriting) // owner sends
+        if (stream.IsWriting)
         {
             stream.SendNext(transform.position);
             stream.SendNext(transform.rotation);
-            stream.SendNext(pitch); // optional: send local camera pitch if you need it
+            stream.SendNext(pitch);
         }
-        else // remotes receive
+        else
         {
             netTargetPos = (Vector3)stream.ReceiveNext();
             netTargetRot = (Quaternion)stream.ReceiveNext();
             pitch = (float)stream.ReceiveNext();
 
-            // apply remote camera pitch if the remote has a visible head/camera bone you care about
             if (cam && !photonView.IsMine)
                 cam.transform.localEulerAngles = new Vector3(pitch, 0f, 0f);
         }
