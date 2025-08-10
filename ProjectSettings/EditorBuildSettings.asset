@@ -8,15 +8,21 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/PlayerRoom.unity
     guid: 24221ad28ba4c604f8052239b8bd8b0a
   - enabled: 0
     path: Assets/Scenes/Multiplayer.unity
     guid: a256cdef7127f1742b4370f9b11f5121
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Portal.unity
     guid: 80edd1cb55ab6244bbbfb37116b99a42
+  - enabled: 1
+    path: Assets/Scenes/PlayerRoom Andy.unity
+    guid: a536d0d1e3f148649a10ef372b8f18a6
+  - enabled: 1
+    path: Assets/Scenes/Portal Test Andy.unity
+    guid: 5e2df59e178e19b4e912c1043794d71d
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
