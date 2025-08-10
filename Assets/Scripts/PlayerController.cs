@@ -82,7 +82,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     void Awake()
     {
         controller = GetComponent<CharacterController>();
-        var cap = GetComponent<CapsuleCollider>() ?? gameObject.AddComponent<CapsuleCollider>();
+        CapsuleCollider cap = GetComponent<CapsuleCollider>() ?? gameObject.AddComponent<CapsuleCollider>();
         cap.direction = 1;
         cap.radius = controller.radius;
         cap.height = controller.height;
@@ -147,17 +147,13 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         }
         HandlePortalClicks();
 
-
-
-        // if within proximity to player
         if (Input.GetKeyDown(m_killKey))
         {
 
-            Debug.Log("killing check");
             Ray r = new(transform.position, transform.forward * m_killMagnitude);
             Physics.Raycast(r, out RaycastHit hit);
             if (!hit.collider) return;
-            Debug.Log(hit.collider.name);
+            Debug.Log($"hit object {hit.collider.name}");
 
             GameObject collision = hit.collider.gameObject;
             PlayerController victimController = hit.collider.GetComponentInParent<PlayerController>();
