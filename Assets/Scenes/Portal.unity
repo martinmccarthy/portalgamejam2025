@@ -1322,7 +1322,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_multiplayerManager: {fileID: 1761595164}
-  nickname: player2
+  m_nameInput: {fileID: 0}
 --- !u!114 &1247929606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1781,6 +1781,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxPlayersPerRoom: 6
+  version: 1
+  gameplaySceneName: Multiplayer
 --- !u!4 &1761595165
 Transform:
   m_ObjectHideFlags: 0
