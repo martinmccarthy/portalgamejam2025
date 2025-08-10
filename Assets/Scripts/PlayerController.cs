@@ -143,17 +143,22 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     {
         if (!isKiller)
         {
-            Debug.Log("killer not found");
             return;
         }
         HandlePortalClicks();
 
+
+
         // if within proximity to player
         if (Input.GetKeyDown(m_killKey))
         {
-            Ray r = new(transform.position, transform.forward);
+
+            Debug.Log("killing check");
+            Ray r = new(transform.position, transform.forward * m_killMagnitude);
             Physics.Raycast(r, out RaycastHit hit);
             if (!hit.collider) return;
+            Debug.Log(hit.collider.name);
+
             GameObject collision = hit.collider.gameObject;
             PlayerController victimController = hit.collider.GetComponentInParent<PlayerController>();
             if (!victimController) return;
