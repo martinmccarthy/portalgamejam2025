@@ -1526,7 +1526,7 @@ MonoBehaviour:
   sprintSpeed: 5
   jumpHeight: 1.2
   g: -9.81
-  mouseSensitivity: 180
+  mouseSensitivity: 360
   pitchMin: -85
   pitchMax: 85
   slideButton: 306
