@@ -6,11 +6,17 @@ using UnityEngine.SceneManagement;
 public class GameController : MonoBehaviourPunCallbacks
 {
     public List<Player> players = new();
-    [SerializeField] GameObject m_playerPrefab;
+    [SerializeField] RoundManager m_roundManager;
     private void Start()
     {
         var go = PhotonNetwork.Instantiate("Player", Vector3.up, Quaternion.identity, 0);
-        PhotonNetwork.LocalPlayer.TagObject = go;
+        // PhotonNetwork.LocalPlayer.TagObject = go;
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            PhotonView pv = m_roundManager.GetComponent<PhotonView>();
+            pv.RPC("StartRound", RpcTarget.All, 5.0f);
+        }
     }
 
 

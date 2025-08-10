@@ -5,15 +5,19 @@ using Photon.Realtime;
 public class MultiplayerManager : MonoBehaviourPunCallbacks
 {
     public byte maxPlayersPerRoom = 6;
-    string version = "1";
+    [SerializeField] string version = "1";
+    [SerializeField] string gameplaySceneName = "Multiplayer";
 
     void Awake()
     {
         PhotonNetwork.AutomaticallySyncScene = true;
         PhotonNetwork.GameVersion = version;
-        PhotonNetwork.ConnectUsingSettings();
     }
 
+    void Start()
+    {
+        Connect();
+    }
 
     public void Connect()
     {
@@ -23,12 +27,10 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
             return;
         }
         PhotonNetwork.ConnectUsingSettings();
-        PhotonNetwork.GameVersion = version;
     }
 
     public override void OnConnectedToMaster()
     {
-        Debug.Log(nameof(OnConnectedToMaster));
         PhotonNetwork.JoinRandomRoom();
     }
 
@@ -39,7 +41,13 @@ public class MultiplayerManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        var go = PhotonNetwork.Instantiate("Player", Vector3.zero, Quaternion.identity, 0);
-        // PhotonNetwork.LoadLevel("PlayerRoom");
+    }
+
+    public void StartGame()
+    {
+        if (!PhotonNetwork.IsMasterClient) return;
+        PhotonNetwork.CurrentRoom.IsOpen = false;
+        PhotonNetwork.CurrentRoom.IsVisible = false;
+        PhotonNetwork.LoadLevel(gameplaySceneName);
     }
 }
