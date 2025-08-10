@@ -64,6 +64,8 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
     // --- Portal placement & teleport ---
     [Header("Portals")]
+    [SerializeField] GameObject redPortal;
+    [SerializeField] GameObject bluePortal;
     [SerializeField] float clickRayDistance = 200f;
     [SerializeField] LayerMask clickRayMask = ~0;
     [SerializeField] float portalOffset = 0.01f;          // in front of surface along normal
@@ -321,7 +323,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
         if (endpoint == null)
         {
-            GameObject go = new GameObject(name);
+            GameObject go = Instantiate(name == "PortalLeft" ? redPortal : bluePortal);
             go.transform.position = pos;
             go.transform.rotation = rot;
 
