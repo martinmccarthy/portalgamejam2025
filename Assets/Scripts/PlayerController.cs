@@ -54,15 +54,20 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     Vector3 netTargetPos;
     Quaternion netTargetRot;
 
-    // ---- Click raycast & gizmos ----
-    [Header("Click Raycast")]
+    // --- Portal placement & teleport ---
+    [Header("Portals")]
     [SerializeField] float clickRayDistance = 200f;
-    [SerializeField] LayerMask clickRayMask = ~0;      // everything by default
-    [SerializeField] float gizmoSize = 0.15f;
-    Vector3? lastLeftHitPos;
-    Vector3? lastRightHitPos;
-    Vector3 lastLeftHitNormal;
-    Vector3 lastRightHitNormal;
+    [SerializeField] LayerMask clickRayMask = ~0;
+    [SerializeField] float portalOffset = 0.01f;          // in front of surface along normal
+    [SerializeField] Vector3 portalSize = new(0.35f, 0.55f, 0.02f); // small trigger
+    [SerializeField] float exitClearance = 0.6f;          // how far in front of exit to place player
+    [SerializeField] float portalCooldown = 0.25f;
+    [SerializeField] float floorUpwardBoost = 1.25f;         // how much to pop up when arriving at a floor portal
+    [SerializeField] float floorExitClearanceMultiplier = 2f; // multiplies exitClearance only when arriving at a floor portal
+
+    PortalEndpoint leftEndpoint;
+    PortalEndpoint rightEndpoint;
+    float nextTeleportAllowed;
 
     void Awake()
     {
@@ -115,7 +120,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         {
             DoRotation();
             DoMotion();
-            HandleClickRaycasts();
+            HandlePortalClicks();
         }
         else
         {
@@ -262,50 +267,122 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         }
     }
 
-    // ---- CLICK RAYCAST ----
-    void HandleClickRaycasts()
+    // ---------- PORTALS ----------
+    void HandlePortalClicks()
     {
         if (!cam) return;
 
-        // Use the center of the screen since your cursor is locked
         Vector3 center = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
         Ray ray = cam.ScreenPointToRay(center);
 
-        if (Input.GetMouseButtonDown(0)) // Left click
+        if (Input.GetMouseButtonDown(0))
         {
             if (Physics.Raycast(ray, out RaycastHit hit, clickRayDistance, clickRayMask, QueryTriggerInteraction.Ignore))
-            {
-                lastLeftHitPos = hit.point;
-                lastLeftHitNormal = hit.normal;
-            }
+                CreateOrMoveEndpoint(ref leftEndpoint, "PortalLeft", hit);
         }
-
-        if (Input.GetMouseButtonDown(1)) // Right click
+        if (Input.GetMouseButtonDown(1))
         {
             if (Physics.Raycast(ray, out RaycastHit hit, clickRayDistance, clickRayMask, QueryTriggerInteraction.Ignore))
-            {
-                lastRightHitPos = hit.point;
-                lastRightHitNormal = hit.normal;
-            }
+                CreateOrMoveEndpoint(ref rightEndpoint, "PortalRight", hit);
         }
     }
+
+    void CreateOrMoveEndpoint(ref PortalEndpoint endpoint, string name, RaycastHit hit)
+    {
+        Vector3 pos = hit.point + hit.normal * portalOffset;
+        Quaternion rot = Quaternion.LookRotation(hit.normal, Vector3.up);
+
+        if (endpoint == null)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.rotation = rot;
+
+            BoxCollider bc = go.AddComponent<BoxCollider>();
+            bc.isTrigger = true;
+            bc.size = portalSize;
+
+            endpoint = go.AddComponent<PortalEndpoint>();
+            endpoint.owner = this;
+            endpoint.isLeft = (name == "PortalLeft");
+        }
+        else
+        {
+            endpoint.transform.SetPositionAndRotation(pos, rot);
+        }
+    }
+
+    public void TryTeleportFrom(PortalEndpoint from)
+    {
+        if (Time.time < nextTeleportAllowed) return;
+
+        PortalEndpoint to = (from.isLeft ? rightEndpoint : leftEndpoint);
+        if (to == null) return;
+
+        Vector3 destNormal = to.transform.forward.normalized;
+
+        bool toFloor = Vector3.Dot(destNormal, Vector3.up) > 0.75f; // faces up
+        bool toCeiling = Vector3.Dot(destNormal, Vector3.down) > 0.75f; // faces down
+        bool toWall = !toFloor && !toCeiling;
+
+        // Base clearance
+        float clearance = exitClearance;
+        if (toFloor) clearance *= floorExitClearanceMultiplier; // only when ARRIVING at a floor portal
+
+        // Exit position
+        Vector3 exitPos = to.transform.position + destNormal * clearance;
+        if (toFloor) exitPos += Vector3.up * floorUpwardBoost;
+
+        // Exit rotation (always upright)
+        Quaternion exitRot;
+
+        if (toWall)
+        {
+            // Face the wall's normal, but keep world-up as Up
+            Vector3 fwd = Vector3.ProjectOnPlane(destNormal, Vector3.up);
+            if (fwd.sqrMagnitude < 1e-4f) fwd = Vector3.forward; // safety
+            exitRot = Quaternion.LookRotation(fwd.normalized, Vector3.up);
+        }
+        else
+        {
+            // Floor or ceiling: keep player upright; preserve horizontal yaw from current facing
+            Vector3 yawForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            if (yawForward.sqrMagnitude < 1e-4f)
+            {
+                yawForward = Vector3.ProjectOnPlane(to.transform.right, Vector3.up);
+                if (yawForward.sqrMagnitude < 1e-4f) yawForward = Vector3.forward;
+            }
+            exitRot = Quaternion.LookRotation(yawForward.normalized, Vector3.up);
+        }
+
+        // Teleport
+        controller.enabled = false;
+        transform.SetPositionAndRotation(exitPos, exitRot);
+        verticalVelocity = 0f;
+        controller.enabled = true;
+
+        nextTeleportAllowed = Time.time + portalCooldown;
+    }
+
+
 
     void OnDrawGizmos()
     {
-        if (lastLeftHitPos.HasValue)
+        if (leftEndpoint)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(lastLeftHitPos.Value, gizmoSize);
-            Gizmos.DrawLine(lastLeftHitPos.Value, lastLeftHitPos.Value + lastLeftHitNormal * (gizmoSize * 2f));
+            Gizmos.DrawWireCube(leftEndpoint.transform.position, portalSize);
+            Gizmos.DrawRay(leftEndpoint.transform.position, leftEndpoint.transform.forward * 0.3f);
         }
-        if (lastRightHitPos.HasValue)
+        if (rightEndpoint)
         {
             Gizmos.color = Color.cyan;
-            Gizmos.DrawSphere(lastRightHitPos.Value, gizmoSize);
-            Gizmos.DrawLine(lastRightHitPos.Value, lastRightHitPos.Value + lastRightHitNormal * (gizmoSize * 2f));
+            Gizmos.DrawWireCube(rightEndpoint.transform.position, portalSize);
+            Gizmos.DrawRay(rightEndpoint.transform.position, rightEndpoint.transform.forward * 0.3f);
         }
     }
 
+    // ---------- Photon Sync ----------
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
@@ -322,6 +399,23 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
             if (cam && !photonView.IsMine)
                 cam.transform.localEulerAngles = new Vector3(pitch, 0f, 0f);
+        }
+    }
+}
+
+// Small helper on each portal endpoint that teleports the player when touched
+public class PortalEndpoint : MonoBehaviour
+{
+    public PlayerController owner;
+    public bool isLeft;
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (!owner) return;
+        var pc = other.GetComponentInParent<PlayerController>();
+        if (pc && pc == owner) // only teleport this player’s controller
+        {
+            owner.TryTeleportFrom(this);
         }
     }
 }

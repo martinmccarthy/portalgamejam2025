@@ -1536,8 +1536,13 @@ MonoBehaviour:
   clickRayDistance: 200
   clickRayMask:
     serializedVersion: 2
-    m_Bits: 4294967295
-  gizmoSize: 0.15
+    m_Bits: 1024
+  portalOffset: 0.25
+  portalSize: {x: 0.35, y: 0.55, z: 0.02}
+  exitClearance: 0.25
+  portalCooldown: 0.25
+  floorUpwardBoost: 0.1
+  floorExitClearanceMultiplier: 1
 --- !u!143 &3193002681448302957
 CharacterController:
   m_ObjectHideFlags: 0
