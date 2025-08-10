@@ -220,7 +220,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 132843923}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &132843925
 Camera:
   m_ObjectHideFlags: 0
@@ -331,6 +331,51 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!1 &350091952
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 350091954}
+  - component: {fileID: 350091953}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &350091953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 350091952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 815014ada4a52df45bbc20e49c745005, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_roundManager: {fileID: 1062955313}
+--- !u!4 &350091954
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 350091952}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -33.24547, y: 28.169443, z: 57.238792}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &449434417
 GameObject:
   m_ObjectHideFlags: 0
@@ -771,7 +816,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_multiplayerManager: {fileID: 1761595164}
-  nickname: player2
+  m_nameInput: {fileID: 0}
 --- !u!114 &1247929606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1216,7 +1261,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1761595164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1230,6 +1275,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxPlayersPerRoom: 6
+  version: 1
+  gameplaySceneName: Multiplayer
 --- !u!4 &1761595165
 Transform:
   m_ObjectHideFlags: 0
@@ -1392,3 +1439,4 @@ SceneRoots:
   - {fileID: 1761595165}
   - {fileID: 1385943793}
   - {fileID: 1062955314}
+  - {fileID: 350091954}
