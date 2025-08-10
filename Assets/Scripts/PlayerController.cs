@@ -4,6 +4,14 @@ using TMPro;
 
 public class PlayerController : MonoBehaviourPun, IPunObservable
 {
+    [Header("KillerMechanics")]
+    public bool isKiller = false;
+    [SerializeField] private KeyCode m_killKey = KeyCode.F;
+    [SerializeField] private float m_killMagnitude = 1.0f;
+
+    [Header("PlayerInformation")]
+    public bool isAlive = true;
+
     [Header("Move")]
     public float movementSpeed = 4f;
     public float sprintSpeed = 6f;
@@ -120,6 +128,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         {
             DoRotation();
             DoMotion();
+            HandleKill();
             HandlePortalClicks();
         }
         else
@@ -127,6 +136,24 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
             transform.position = Vector3.Lerp(transform.position, netTargetPos, 12f * Time.deltaTime);
             transform.rotation = Quaternion.Slerp(transform.rotation, netTargetRot, 12f * Time.deltaTime);
         }
+    }
+
+    private void HandleKill()
+    {
+        // if within proximity to player
+        if (isKiller && Input.GetKeyDown(m_killKey))
+        {
+            Ray r = new(transform.position, transform.forward);
+            Physics.Raycast(r, out RaycastHit hit);
+            if (!hit.collider) return;
+            GameObject collision = hit.collider.gameObject;
+            PlayerController victimController = hit.collider.GetComponentInParent<PlayerController>();
+            if (!victimController) return;
+
+            victimController.photonView.RPC(nameof(PlayerController.RpcDie), RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber);
+            
+        }
+
     }
 
     private void DoRotation()
@@ -400,6 +427,14 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
             if (cam && !photonView.IsMine)
                 cam.transform.localEulerAngles = new Vector3(pitch, 0f, 0f);
         }
+    }
+
+    [PunRPC]
+    public void RpcDie()
+    {
+        isAlive = false;
+        GetComponent<CharacterController>().enabled = false;
+        transform.Find("Icosphere.001").gameObject.SetActive(false);
     }
 }
 
