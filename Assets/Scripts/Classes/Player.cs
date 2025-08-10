@@ -1,15 +1,17 @@
-using UnityEngine;
-
 public class Player
 {
-    public string Name;
-    public int Gold;
-    public int Color;
+    public string NickName;
+    public int ActorNumber;
+    public bool IsKiller;
+    public int Score;
+    public bool IsReady;
 
-    public Player(string name, int gold, int color)
+    public Player(Photon.Realtime.Player p, bool isKiller = false)
     {
-        Name = name;
-        Gold = gold;
-        Color = color;
+        NickName = p.NickName;
+        ActorNumber = p.ActorNumber;
+        IsKiller = isKiller;
+        Score = 0;
+        IsReady = false;
     }
 }
