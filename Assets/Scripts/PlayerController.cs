@@ -126,14 +126,14 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
     void Update()
     {
+        if (!isAlive)
+        {
+            HandleSpectate();
+            return;
+        }
+
         if (photonView.IsMine)
         {
-            if (!isAlive)
-            {
-                HandleSpectate();
-                return;
-            }
-
             DoRotation();
             DoMotion();
             HandleKiller();
@@ -457,6 +457,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         }
     }
 
+   
     void HandleSpectate()
     {
         // implement me pls
