@@ -32,6 +32,37 @@ Transform:
   - {fileID: 756900077834415566}
   m_Father: {fileID: 8580421894434728785}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &276966346140055910
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1908031532342588142}
+  m_Layer: 0
+  m_Name: PlayerBatteryPlacePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1908031532342588142
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 276966346140055910}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.93, z: -0.67}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1774844266561212848}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &435555888028412352
 GameObject:
   m_ObjectHideFlags: 0
@@ -1484,6 +1515,7 @@ Transform:
   - {fileID: 6352887935658700206}
   - {fileID: 5136246888325224872}
   - {fileID: 8915038587026534358}
+  - {fileID: 1908031532342588142}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &1999806709958905431
@@ -1715,6 +1747,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d22fe0d1348621e43911449f7313428e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  holdingMovementSpeed: 3
+  holdingSprintSpeed: 4.5
+  m_battery: {fileID: 6076276568049025493, guid: cc6a38ed55a827440b699b3c61045bd0, type: 3}
+  m_charger: {fileID: 6001625594984510049, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+  m_batterySpawns: {fileID: 4783745506173438316, guid: 64acfa2c645ef1948af6b905165e638a, type: 3}
+  m_chargerSpawns: {fileID: 745740924939854175, guid: 30d8f4446b9efcc4980cb5fd331ed032, type: 3}
+  m_numberOfBatterys: 5
+  m_numberOfBatteryChargers: 5
+  m_useMagnitude: 1
+  m_useKey: 102
+  m_dropKey: 103
 --- !u!1 &4350905233406479733
 GameObject:
   m_ObjectHideFlags: 0
@@ -2970,7 +3013,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 1079
+    m_Bits: 3639
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
