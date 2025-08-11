@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
     [Header("PlayerInformation")]
     public bool isAlive = true;
+    [SerializeField] CapsuleCollider cap;
 
     [Header("Move")]
     public float movementSpeed = 4f;
@@ -82,7 +83,6 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     void Awake()
     {
         controller = GetComponent<CharacterController>();
-        var cap = GetComponent<CapsuleCollider>() ?? gameObject.AddComponent<CapsuleCollider>();
         cap.direction = 1;
         cap.radius = controller.radius;
         cap.height = controller.height;
@@ -126,6 +126,12 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
 
     void Update()
     {
+        if (!isAlive)
+        {
+            HandleSpectate();
+            return;
+        }
+
         if (photonView.IsMine)
         {
             DoRotation();
@@ -143,19 +149,20 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
     {
         if (!isKiller)
         {
-            Debug.Log("killer not found");
             return;
         }
         HandlePortalClicks();
 
-        // if within proximity to player
         if (Input.GetKeyDown(m_killKey))
         {
             Ray r = new(transform.position, transform.forward);
-            Physics.Raycast(r, out RaycastHit hit);
+            Physics.Raycast(r, out RaycastHit hit, maxDistance: m_killMagnitude);
             if (!hit.collider) return;
+            Debug.Log($"hit object {hit.collider.name}");
+
             GameObject collision = hit.collider.gameObject;
             PlayerController victimController = hit.collider.GetComponentInParent<PlayerController>();
+            Debug.Log(victimController);
             if (!victimController) return;
 
             victimController.photonView.RPC(nameof(PlayerController.RpcDie), RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber);
@@ -450,11 +457,18 @@ public class PlayerController : MonoBehaviourPun, IPunObservable
         }
     }
 
+   
+    void HandleSpectate()
+    {
+        // implement me pls
+    }
+
     [PunRPC]
-    public void RpcDie()
+    public void RpcDie(int killerActor)
     {
         isAlive = false;
         GetComponent<CharacterController>().enabled = false;
+        cap.enabled = false;
         transform.Find("Icosphere.001").gameObject.SetActive(false);
     }
 }

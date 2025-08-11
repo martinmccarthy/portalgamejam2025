@@ -55,6 +55,12 @@ public class RoundManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
+    void CheckSurvivors()
+    {
+
+    }
+
+    [PunRPC]
     void EndRound()
     {
         roundActive = false;

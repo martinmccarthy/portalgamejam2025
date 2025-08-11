@@ -866,8 +866,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxPlayersPerRoom: 6
-  version: 2
-  gameplaySceneName: Portal
+  version: 1
+  gameplaySceneName: Portal Test Andy
 --- !u!4 &786058604
 Transform:
   m_ObjectHideFlags: 0
