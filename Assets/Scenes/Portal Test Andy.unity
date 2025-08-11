@@ -331,6 +331,63 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!1001 &341151398
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.83787966
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.50478023
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.93325233
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071067
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3601906308759317953, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6001625594984510049, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
+      propertyPath: m_Name
+      value: BatteryCharger
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 0729b28c56e0e274e85b5dbdbf4417a5, type: 3}
 --- !u!43 &439447003
 Mesh:
   m_ObjectHideFlags: 0
@@ -2517,3 +2574,4 @@ SceneRoots:
   - {fileID: 2039480442}
   - {fileID: 1262753303}
   - {fileID: 1037883799}
+  - {fileID: 341151398}
